@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USA Triathlon Lightning Safety Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --usat-navy: #003B5C;
+            --usat-blue: #00A3E0;
+            --usat-red: #E4002B;
+            --condition-green: #28a745;
+            --condition-yellow: #ffc107;
+            --condition-red: #dc3545;
+            --condition-black: #1a1a1a;
+            --text-light: #ffffff;
+            --text-dark: #333333;
+            --bg-light: #f8f9fa;
+            --border-color: #dee2e6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+        }
+
+        /* Header */
+        .header {
+            background: var(--usat-navy);
+            color: var(--text-light);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-text {
+            font-family: 'Oswald', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+        }
+
+        .logo-text span {
+            color: var(--usat-red);
+        }
+
+        .header-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--usat-blue);
+        }
+
+        .header-right {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Source Sans Pro', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--usat-blue);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0090c7;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid var(--usat-blue);
+        }
+
+        .btn-secondary:hover {
+            background: var(--usat-blue);
+        }
+
+        .btn-danger {
+            background: var(--usat-red);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c9001f;
+        }
+
+        /* Main Layout */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Condition Banner */
+        .condition-banner {
+            grid-column: 1 / -1;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .condition-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .condition-banner.green {
+            background: linear-gradient(135deg, var(--condition-green) 0%, #1e7e34 100%);
+            color: white;
+        }
+
+        .condition-banner.yellow {
+            background: linear-gradient(135deg, var(--condition-yellow) 0%, #e0a800 100%);
+            color: var(--text-dark);
+        }
+
+        .condition-banner.red {
+            background: linear-gradient(135deg, var(--condition-red) 0%, #b02a37 100%);
+            color: white;
+        }
+
+        .condition-banner.black {
+            background: linear-gradient(135deg, #2d2d2d 0%, var(--condition-black) 100%);
+            color: white;
+        }
+
+        .condition-label {
+            font-family: 'Oswald', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 0.5rem;
+        }
+
+        .condition-description {
+            font-size: 1.25rem;
+            opacity: 0.95;
+        }
+
+        .condition-distance {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.5rem;
+            margin-top: 0.5rem;
+            opacity: 0.9;
+        }
+
+        /* Alert Animation */
+        @keyframes pulse-alert {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .condition-banner.alerting {
+            animation: pulse-alert 0.5s ease-in-out 3;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: var(--usat-navy);
+            color: white;
+            padding: 1rem 1.5rem;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Timer Section */
+        .timer-card {
+            grid-column: 1 / -1;
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3rem;
+            padding: 1rem 0;
+        }
+
+        .timer-display {
+            text-align: center;
+        }
+
+        .timer-value {
+            font-family: 'Oswald', sans-serif;
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--usat-navy);
+            line-height: 1;
+        }
+
+        .timer-value.warning {
+            color: var(--condition-yellow);
+        }
+
+        .timer-value.danger {
+            color: var(--condition-red);
+        }
+
+        .timer-value.safe {
+            color: var(--condition-green);
+        }
+
+        .timer-label {
+            font-size: 1rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 0.5rem;
+        }
+
+        .timer-status {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .timer-status.active {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--condition-red);
+        }
+
+        .timer-status.clear {
+            background: rgba(40, 167, 69, 0.1);
+            color: var(--condition-green);
+        }
+
+        .timer-info {
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .timer-info p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 0.75rem;
+        }
+
+        .last-strike-info {
+            background: var(--bg-light);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--usat-blue);
+        }
+
+        .last-strike-info strong {
+            color: var(--usat-navy);
+        }
+
+        /* Strike Input */
+        .strike-input-section {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--usat-navy);
+            margin-bottom: 0.5rem;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Source Sans Pro', sans-serif;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: var(--usat-blue);
+        }
+
+        .btn-log-strike {
+            padding: 0.75rem 2rem;
+            font-size: 1.1rem;
+            background: var(--usat-red);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-log-strike:hover {
+            background: #c9001f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(228, 0, 43, 0.3);
+        }
+
+        /* Quick Distance Buttons */
+        .quick-distance-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .quick-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border-color);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .quick-btn:hover {
+            border-color: var(--usat-blue);
+            background: rgba(0, 163, 224, 0.1);
+        }
+
+        .quick-btn.danger {
+            border-color: var(--condition-red);
+            color: var(--condition-red);
+        }
+
+        .quick-btn.warning {
+            border-color: var(--condition-yellow);
+            color: #856404;
+        }
+
+        .quick-btn.caution {
+            border-color: var(--usat-blue);
+            color: var(--usat-blue);
+        }
+
+        /* Action Checklist */
+        .action-list {
+            list-style: none;
+        }
+
+        .action-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s ease;
+        }
+
+        .action-item:last-child {
+            border-bottom: none;
+        }
+
+        .action-item:hover {
+            background: var(--bg-light);
+        }
+
+        .action-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .action-checkbox.checked {
+            background: var(--condition-green);
+            border-color: var(--condition-green);
+            color: white;
+        }
+
+        .action-checkbox.checked::after {
+            content: '✓';
+            font-weight: bold;
+        }
+
+        .action-content {
+            flex: 1;
+        }
+
+        .action-text {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .action-meta {
+            font-size: 0.85rem;
+            color: #666;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .action-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Strike History */
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            gap: 1rem;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-badge {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .history-badge.black { background: var(--condition-black); }
+        .history-badge.red { background: var(--condition-red); }
+        .history-badge.yellow { background: var(--condition-yellow); }
+        .history-badge.green { background: var(--condition-green); }
+
+        .history-details {
+            flex: 1;
+        }
+
+        .history-distance {
+            font-weight: 700;
+            color: var(--usat-navy);
+        }
+
+        .history-time {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .history-condition {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .history-condition.black { background: var(--condition-black); color: white; }
+        .history-condition.red { background: var(--condition-red); color: white; }
+        .history-condition.yellow { background: var(--condition-yellow); color: var(--text-dark); }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* EAS Flag Display */
+        .eas-flag-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .eas-flag {
+            width: 60px;
+            height: 80px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Oswald', sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: white;
+            opacity: 0.3;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+
+        .eas-flag.active {
+            opacity: 1;
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .eas-flag.green { background: var(--condition-green); }
+        .eas-flag.yellow { background: var(--condition-yellow); color: var(--text-dark); }
+        .eas-flag.red { background: var(--condition-red); }
+        .eas-flag.black { background: var(--condition-black); }
+
+        /* Sound Toggle */
+        .sound-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: #ccc;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--condition-green);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(24px);
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .header {
+                background: var(--usat-navy) !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .btn, .strike-input-section, .quick-distance-buttons, .sound-toggle {
+                display: none !important;
+            }
+
+            .main-container {
+                display: block;
+                padding: 0;
+            }
+
+            .card {
+                break-inside: avoid;
+                margin-bottom: 1rem;
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+
+            .condition-banner {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .timer-card {
+                page-break-after: always;
+            }
+
+            .history-list {
+                max-height: none;
+                overflow: visible;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+
+            .timer-container {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .timer-info {
+                max-width: 100%;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .condition-label {
+                font-size: 2rem;
+            }
+
+            .timer-value {
+                font-size: 3.5rem;
+            }
+
+            .strike-input-section {
+                flex-direction: column;
+            }
+
+            .eas-flag {
+                width: 45px;
+                height: 60px;
+                font-size: 0.7rem;
+            }
+        }
+
+        /* Notification Banner */
+        .notification {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .notification.success {
+            background: var(--condition-green);
+            color: white;
+        }
+
+        .notification.warning {
+            background: var(--condition-yellow);
+            color: var(--text-dark);
+        }
+
+        .notification.danger {
+            background: var(--condition-red);
+            color: white;
+        }
+
+        .notification.critical {
+            background: var(--condition-black);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <div class="logo-text">USA<span>★</span>TRIATHLON</div>
+            <div class="header-title">Lightning Safety Tracker</div>
+        </div>
+        <div class="header-right">
+            <div class="sound-toggle">
+                <span>🔊 Alerts</span>
+                <div class="toggle-switch active" id="soundToggle" onclick="toggleSound()"></div>
+            </div>
+            <button class="btn btn-secondary" onclick="window.print()">
+                🖨️ Print Report
+            </button>
+            <button class="btn btn-danger" onclick="resetTracker()">
+                ↺ Reset
+            </button>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- Condition Banner -->
+        <div class="condition-banner green" id="conditionBanner">
+            <div class="condition-label" id="conditionLabel">GREEN</div>
+            <div class="condition-description" id="conditionDescription">All Clear - No Lightning Threat</div>
+            <div class="condition-distance" id="conditionDistance">No recent strikes within 25 miles</div>
+        </div>
+
+        <!-- Timer Section -->
+        <div class="card timer-card">
+            <div class="card-header">
+                <span>⏱️ 30-Minute Safety Countdown</span>
+                <div class="eas-flag-container">
+                    <div class="eas-flag green active" id="flagGreen">GREEN</div>
+                    <div class="eas-flag yellow" id="flagYellow">YELLOW</div>
+                    <div class="eas-flag red" id="flagRed">RED</div>
+                    <div class="eas-flag black" id="flagBlack">BLACK</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="timer-container">
+                    <div class="timer-display">
+                        <div class="timer-value safe" id="timerValue">30:00</div>
+                        <div class="timer-label">Minutes Remaining</div>
+                        <div class="timer-status clear" id="timerStatus">✓ No Active Threat</div>
+                    </div>
+                    <div class="timer-info">
+                        <p><strong>30-Minute Rule:</strong> The countdown resets after every strike within 15 miles. Race operations may only resume after 30 minutes with NO strikes detected within 25 miles.</p>
+                        <div class="last-strike-info" id="lastStrikeInfo">
+                            <strong>Last Strike:</strong> No strikes logged
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Strike Input -->
+        <div class="card">
+            <div class="card-header">
+                <span>⚡ Log Lightning Strike</span>
+            </div>
+            <div class="card-body">
+                <div class="strike-input-section">
+                    <div class="input-group">
+                        <label for="strikeDistance">Distance (miles)</label>
+                        <input type="number" id="strikeDistance" min="1" max="100" placeholder="Enter distance">
+                    </div>
+                    <div class="input-group">
+                        <label for="strikeNotes">Notes (optional)</label>
+                        <input type="text" id="strikeNotes" placeholder="Direction, source, etc.">
+                    </div>
+                    <button class="btn-log-strike" onclick="logStrike()">⚡ Log Strike</button>
+                </div>
+                <div class="quick-distance-buttons">
+                    <span style="color: #666; font-weight: 600;">Quick Log:</span>
+                    <button class="quick-btn danger" onclick="quickLog(5)">5 mi</button>
+                    <button class="quick-btn danger" onclick="quickLog(10)">10 mi</button>
+                    <button class="quick-btn warning" onclick="quickLog(15)">15 mi</button>
+                    <button class="quick-btn warning" onclick="quickLog(20)">20 mi</button>
+                    <button class="quick-btn caution" onclick="quickLog(25)">25 mi</button>
+                    <button class="quick-btn" onclick="quickLog(30)">30 mi</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Strike History -->
+        <div class="card">
+            <div class="card-header">
+                <span>📋 Strike History</span>
+                <span id="strikeCount">0 strikes</span>
+            </div>
+            <div class="card-body">
+                <div class="history-list" id="historyList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚡</div>
+                        <p>No strikes logged yet.<br>Use the form above to log lightning strikes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Checklist -->
+        <div class="card" style="grid-column: 1 / -1;">
+            <div class="card-header">
+                <span>📝 Action Checklist - <span id="actionConditionLabel">GREEN CONDITION</span></span>
+                <span id="actionProgress">0/0 complete</span>
+            </div>
+            <div class="card-body">
+                <ul class="action-list" id="actionList">
+                    <!-- Actions will be populated by JavaScript -->
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // State
+        let strikes = [];
+        let currentCondition = 'green';
+        let timerInterval = null;
+        let remainingSeconds = 1800; // 30 minutes
+        let timerActive = false;
+        let soundEnabled = true;
+        let checkedActions = {};
+
+        // Action definitions based on USAT guidelines
+        const actionsByCondition = {
+            green: [
+                { text: 'Race operations proceed as planned', responsible: 'All Personnel', time: 'n/a' },
+                { text: 'Continue monitoring weather conditions', responsible: 'Incident Command', time: 'Ongoing' },
+                { text: 'Verify all EAS flags display GREEN', responsible: 'Site Teams', time: '1 minute' }
+            ],
+            yellow: [
+                { text: 'Inform all staff & volunteers of potential lightning emergency via radio', responsible: 'Incident Command', time: '1 minute' },
+                { text: 'Change EAS flags at all locations to YELLOW', responsible: 'Incident Command', time: '1 minute' },
+                { text: 'Advise start team of potential lightning situation', responsible: 'Swim Start', time: '5-10 minutes' },
+                { text: 'Consider delaying race start to avoid athletes entering the water', responsible: 'Swim Start', time: '5-10 minutes' },
+                { text: 'Begin opening paths and egresses for evacuation', responsible: 'Site Teams', time: '5-10 minutes' },
+                { text: 'Position security to help facilitate fast egress', responsible: 'Site Teams', time: '5-10 minutes' }
+            ],
+            red: [
+                { text: 'Inform all parties of LIGHTNING EMERGENCY via radio', responsible: 'Incident Command', time: '1 minute' },
+                { text: 'Change EAS flags at all locations to RED', responsible: 'Incident Command', time: '1 minute' },
+                { text: 'Evacuate start area, course, and finish area', responsible: 'Start/Course/Finish', time: '30 minutes' },
+                { text: 'Instruct volunteers to seek shelter', responsible: 'All Supervisors', time: '5 minutes' },
+                { text: 'Instruct athletes to self-evacuate and seek shelter', responsible: 'Course Team', time: '10 minutes' },
+                { text: 'SAG vehicles conduct sweep of athletes off the course', responsible: 'SAG', time: '30 minutes' },
+                { text: 'Shelter volunteer marshals in vehicles', responsible: 'SAG', time: '30 minutes' }
+            ],
+            black: [
+                { text: 'Confirm outdoor areas are CLEAR of athletes and volunteers', responsible: 'Start/Course/Finish', time: '10-15 minutes' },
+                { text: 'All personnel retreat to indoor locations or vehicles', responsible: 'All Personnel', time: '10-15 minutes' },
+                { text: 'Change EAS flags at all locations to BLACK', responsible: 'Incident Command', time: '1 minute' },
+                { text: '30-minute countdown clock is active - resets after every strike within 15 miles', responsible: 'Incident Command', time: 'Ongoing' },
+                { text: 'Hold all positions until Incident Command confirms no strikes within 25 miles for 30 minutes', responsible: 'All Personnel', time: 'Ongoing' },
+                { text: 'Avoid water and bodies of water', responsible: 'All Personnel', time: 'Immediate' },
+                { text: 'Avoid metal objects (fencing, bike racks, scaffolds)', responsible: 'All Personnel', time: 'Immediate' },
+                { text: 'Do NOT shelter in tents or pavilions', responsible: 'All Personnel', time: 'Immediate' }
+            ]
+        };
+
+        // Audio context for alerts
+        let audioContext = null;
+
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playAlertSound(type) {
+            if (!soundEnabled) return;
+            
+            initAudio();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Different sounds for different conditions
+            const sounds = {
+                yellow: { freq: 800, duration: 0.3, pattern: [1, 0.5, 1] },
+                red: { freq: 600, duration: 0.2, pattern: [1, 0.3, 1, 0.3, 1] },
+                black: { freq: 400, duration: 0.5, pattern: [1, 0.2, 1, 0.2, 1, 0.2, 1] },
+                clear: { freq: 1000, duration: 0.15, pattern: [1, 0.1, 1] }
+            };
+            
+            const sound = sounds[type] || sounds.yellow;
+            oscillator.frequency.value = sound.freq;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            oscillator.start();
+            
+            setTimeout(() => {
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                oscillator.stop(audioContext.currentTime + 0.1);
+            }, sound.duration * 1000);
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const toggle = document.getElementById('soundToggle');
+            toggle.classList.toggle('active', soundEnabled);
+        }
+
+        function getConditionForDistance(distance) {
+            if (distance <= 10) return 'black';
+            if (distance <= 15) return 'red';
+            if (distance <= 25) return 'yellow';
+            return 'green';
+        }
+
+        function getConditionInfo(condition) {
+            const info = {
+                green: {
+                    label: 'GREEN',
+                    description: 'All Clear - No Lightning Threat',
+                    distance: 'No recent strikes within 25 miles'
+                },
+                yellow: {
+                    label: 'YELLOW',
+                    description: 'Early Warning - Strike Within 25 Miles',
+                    distance: 'Prepare for possible evacuation'
+                },
+                red: {
+                    label: 'RED',
+                    description: 'Lightning Emergency - Strike Within 15 Miles',
+                    distance: 'Begin evacuation procedures'
+                },
+                black: {
+                    label: 'BLACK',
+                    description: 'Critical - Strike Within 10 Miles',
+                    distance: 'Full evacuation - Seek shelter immediately'
+                }
+            };
+            return info[condition];
+        }
+
+        function updateConditionDisplay(condition, closestStrike = null) {
+            const banner = document.getElementById('conditionBanner');
+            const label = document.getElementById('conditionLabel');
+            const description = document.getElementById('conditionDescription');
+            const distance = document.getElementById('conditionDistance');
+            const actionLabel = document.getElementById('actionConditionLabel');
+
+            const info = getConditionInfo(condition);
+            
+            banner.className = 'condition-banner ' + condition;
+            label.textContent = info.label;
+            description.textContent = info.description;
+            
+            if (closestStrike) {
+                distance.textContent = `Closest strike: ${closestStrike} miles`;
+            } else {
+                distance.textContent = info.distance;
+            }
+
+            actionLabel.textContent = info.label + ' CONDITION';
+
+            // Update EAS flags
+            ['green', 'yellow', 'red', 'black'].forEach(c => {
+                const flag = document.getElementById('flag' + c.charAt(0).toUpperCase() + c.slice(1));
+                flag.classList.toggle('active', c === condition);
+            });
+
+            // Alert animation
+            if (condition !== currentCondition) {
+                banner.classList.add('alerting');
+                setTimeout(() => banner.classList.remove('alerting'), 1500);
+                
+                if (condition !== 'green') {
+                    playAlertSound(condition);
+                    showNotification(getConditionNotificationMessage(condition), condition === 'black' ? 'critical' : (condition === 'red' ? 'danger' : 'warning'));
+                } else {
+                    playAlertSound('clear');
+                    showNotification('All Clear - Conditions have returned to GREEN', 'success');
+                }
+            }
+
+            currentCondition = condition;
+            updateActionList(condition);
+        }
+
+        function getConditionNotificationMessage(condition) {
+            const messages = {
+                yellow: '⚠️ YELLOW CONDITION - Strike within 25 miles detected',
+                red: '🚨 RED CONDITION - Lightning Emergency! Strike within 15 miles',
+                black: '⛔ BLACK CONDITION - CRITICAL! Strike within 10 miles - EVACUATE NOW'
+            };
+            return messages[condition];
+        }
+
+        function showNotification(message, type) {
+            const existing = document.querySelector('.notification');
+            if (existing) existing.remove();
+
+            const notification = document.createElement('div');
+            notification.className = 'notification ' + type;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => notification.remove(), 5000);
+        }
+
+        function logStrike(distance = null, notes = '') {
+            if (distance === null) {
+                distance = parseFloat(document.getElementById('strikeDistance').value);
+                notes = document.getElementById('strikeNotes').value;
+            }
+
+            if (!distance || distance < 1) {
+                alert('Please enter a valid distance (1+ miles)');
+                return;
+            }
+
+            const strike = {
+                id: Date.now(),
+                distance: distance,
+                notes: notes,
+                time: new Date(),
+                condition: getConditionForDistance(distance)
+            };
+
+            strikes.unshift(strike);
+            updateStrikeHistory();
+            evaluateCondition();
+
+            // Reset timer if strike within 15 miles
+            if (distance <= 15) {
+                startTimer();
+            }
+
+            // Clear inputs
+            document.getElementById('strikeDistance').value = '';
+            document.getElementById('strikeNotes').value = '';
+        }
+
+        function quickLog(distance) {
+            logStrike(distance, 'Quick log');
+        }
+
+        function updateStrikeHistory() {
+            const list = document.getElementById('historyList');
+            const count = document.getElementById('strikeCount');
+
+            count.textContent = strikes.length + ' strike' + (strikes.length !== 1 ? 's' : '');
+
+            if (strikes.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚡</div>
+                        <p>No strikes logged yet.<br>Use the form above to log lightning strikes.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = strikes.map(strike => `
+                <div class="history-item">
+                    <div class="history-badge ${strike.condition}"></div>
+                    <div class="history-details">
+                        <div class="history-distance">${strike.distance} miles ${strike.notes ? '- ' + strike.notes : ''}</div>
+                        <div class="history-time">${formatTime(strike.time)}</div>
+                    </div>
+                    <span class="history-condition ${strike.condition}">${strike.condition}</span>
+                </div>
+            `).join('');
+
+            // Update last strike info
+            const lastStrike = strikes[0];
+            document.getElementById('lastStrikeInfo').innerHTML = `
+                <strong>Last Strike:</strong> ${lastStrike.distance} miles at ${formatTime(lastStrike.time)}
+            `;
+        }
+
+        function formatTime(date) {
+            return date.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: true 
+            });
+        }
+
+        function evaluateCondition() {
+            // Find the closest strike in the last 30 minutes
+            const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+            const recentStrikes = strikes.filter(s => s.time >= thirtyMinutesAgo);
+
+            if (recentStrikes.length === 0) {
+                updateConditionDisplay('green');
+                return;
+            }
+
+            const closestStrike = Math.min(...recentStrikes.map(s => s.distance));
+            const condition = getConditionForDistance(closestStrike);
+            updateConditionDisplay(condition, closestStrike);
+        }
+
+        function startTimer() {
+            remainingSeconds = 1800;
+            timerActive = true;
+            updateTimerDisplay();
+
+            if (timerInterval) clearInterval(timerInterval);
+
+            timerInterval = setInterval(() => {
+                remainingSeconds--;
+                updateTimerDisplay();
+
+                if (remainingSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    timerActive = false;
+                    evaluateCondition();
+                    showNotification('✓ 30-minute countdown complete - Evaluate conditions for resumption', 'success');
+                    playAlertSound('clear');
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(remainingSeconds / 60);
+            const seconds = remainingSeconds % 60;
+            const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            const timerValue = document.getElementById('timerValue');
+            const timerStatus = document.getElementById('timerStatus');
+
+            timerValue.textContent = display;
+
+            if (!timerActive || remainingSeconds === 1800) {
+                timerValue.className = 'timer-value safe';
+                timerStatus.className = 'timer-status clear';
+                timerStatus.textContent = '✓ No Active Threat';
+            } else if (remainingSeconds <= 300) { // Last 5 minutes
+                timerValue.className = 'timer-value warning';
+                timerStatus.className = 'timer-status active';
+                timerStatus.textContent = '⏱️ Timer Active - Approaching Clear';
+            } else {
+                timerValue.className = 'timer-value danger';
+                timerStatus.className = 'timer-status active';
+                timerStatus.textContent = '⚡ Timer Active - Hold Position';
+            }
+        }
+
+        function updateActionList(condition) {
+            const list = document.getElementById('actionList');
+            const actions = actionsByCondition[condition];
+            const progress = document.getElementById('actionProgress');
+
+            // Initialize checked state for this condition if not exists
+            if (!checkedActions[condition]) {
+                checkedActions[condition] = {};
+            }
+
+            list.innerHTML = actions.map((action, index) => {
+                const isChecked = checkedActions[condition][index] || false;
+                return `
+                    <li class="action-item">
+                        <div class="action-checkbox ${isChecked ? 'checked' : ''}" 
+                             onclick="toggleAction('${condition}', ${index})"></div>
+                        <div class="action-content">
+                            <div class="action-text">${action.text}</div>
+                            <div class="action-meta">
+                                <span>👤 ${action.responsible}</span>
+                                <span>⏱️ ${action.time}</span>
+                            </div>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+
+            updateActionProgress(condition);
+        }
+
+        function toggleAction(condition, index) {
+            if (!checkedActions[condition]) {
+                checkedActions[condition] = {};
+            }
+            checkedActions[condition][index] = !checkedActions[condition][index];
+            updateActionList(condition);
+        }
+
+        function updateActionProgress(condition) {
+            const actions = actionsByCondition[condition];
+            const checked = Object.values(checkedActions[condition] || {}).filter(v => v).length;
+            document.getElementById('actionProgress').textContent = `${checked}/${actions.length} complete`;
+        }
+
+        function resetTracker() {
+            if (!confirm('Are you sure you want to reset the tracker? This will clear all strike history and reset the timer.')) {
+                return;
+            }
+
+            strikes = [];
+            checkedActions = {};
+            remainingSeconds = 1800;
+            timerActive = false;
+            if (timerInterval) clearInterval(timerInterval);
+
+            updateStrikeHistory();
+            updateTimerDisplay();
+            updateConditionDisplay('green');
+            
+            document.getElementById('lastStrikeInfo').innerHTML = '<strong>Last Strike:</strong> No strikes logged';
+
+            showNotification('Tracker has been reset', 'success');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateConditionDisplay('green');
+            updateTimerDisplay();
+
+            // Initialize audio on first user interaction
+            document.addEventListener('click', initAudio, { once: true });
+
+            // Allow Enter key to log strike
+            document.getElementById('strikeDistance').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') logStrike();
+            });
+        });
+
+        // Periodic check to update condition based on time elapsed
+        setInterval(() => {
+            if (strikes.length > 0) {
+                evaluateCondition();
+            }
+        }, 10000); // Check every 10 seconds
+    </script>
+</body>
+</html>

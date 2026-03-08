@@ -814,8 +814,26 @@
                         <input type="number" id="strikeDistance" min="1" max="100" placeholder="Enter distance">
                     </div>
                     <div class="input-group">
-                        <label for="strikeNotes">Notes (optional)</label>
-                        <input type="text" id="strikeNotes" placeholder="Direction, source, etc.">
+                        <label for="strikeDirection">Direction</label>
+                        <select id="strikeDirection">
+                            <option value="">-- Select --</option>
+                            <option value="N">N</option>
+                            <option value="N/NE">N/NE</option>
+                            <option value="NE">NE</option>
+                            <option value="E/NE">E/NE</option>
+                            <option value="E">E</option>
+                            <option value="E/SE">E/SE</option>
+                            <option value="SE">SE</option>
+                            <option value="S/SE">S/SE</option>
+                            <option value="S">S</option>
+                            <option value="S/SW">S/SW</option>
+                            <option value="SW">SW</option>
+                            <option value="W/SW">W/SW</option>
+                            <option value="W">W</option>
+                            <option value="W/NW">W/NW</option>
+                            <option value="NW">NW</option>
+                            <option value="N/NW">N/NW</option>
+                        </select>
                     </div>
                     <button class="btn-log-strike" onclick="logStrike()">⚡ Log Strike</button>
                 </div>
@@ -1052,10 +1070,10 @@
             setTimeout(() => notification.remove(), 5000);
         }
 
-        function logStrike(distance = null, notes = '') {
+        function logStrike(distance = null, direction = '') {
             if (distance === null) {
                 distance = parseFloat(document.getElementById('strikeDistance').value);
-                notes = document.getElementById('strikeNotes').value;
+                direction = document.getElementById('strikeDirection').value;
             }
 
             if (!distance || distance < 1) {
@@ -1066,7 +1084,7 @@
             const strike = {
                 id: Date.now(),
                 distance: distance,
-                notes: notes,
+                direction: direction,
                 time: new Date(),
                 condition: getConditionForDistance(distance)
             };
@@ -1082,11 +1100,12 @@
 
             // Clear inputs
             document.getElementById('strikeDistance').value = '';
-            document.getElementById('strikeNotes').value = '';
+            document.getElementById('strikeDirection').value = '';
         }
 
         function quickLog(distance) {
-            logStrike(distance, 'Quick log');
+            const direction = document.getElementById('strikeDirection').value;
+            logStrike(distance, direction);
         }
 
         function updateStrikeHistory() {
@@ -1109,7 +1128,7 @@
                 <div class="history-item">
                     <div class="history-badge ${strike.condition}"></div>
                     <div class="history-details">
-                        <div class="history-distance">${strike.distance} miles ${strike.notes ? '- ' + strike.notes : ''}</div>
+                        <div class="history-distance">${strike.distance} miles ${strike.direction ? '• ' + strike.direction : ''}</div>
                         <div class="history-time">${formatTime(strike.time)}</div>
                     </div>
                     <span class="history-condition ${strike.condition}">${strike.condition}</span>
@@ -1119,7 +1138,7 @@
             // Update last strike info
             const lastStrike = strikes[0];
             document.getElementById('lastStrikeInfo').innerHTML = `
-                <strong>Last Strike:</strong> ${lastStrike.distance} miles at ${formatTime(lastStrike.time)}
+                <strong>Last Strike:</strong> ${lastStrike.distance} miles ${lastStrike.direction ? '(' + lastStrike.direction + ')' : ''} at ${formatTime(lastStrike.time)}
             `;
         }
 
